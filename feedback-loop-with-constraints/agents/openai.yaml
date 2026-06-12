@@ -1,0 +1,7 @@
+interface:
+  display_name: "Feedback Loop With Constraints"
+  short_description: "Run constrained feedback loops on explicit request"
+  default_prompt: "Use $feedback-loop-with-constraints to execute this task against a constraints file and iterate through review feedback."
+
+policy:
+  allow_implicit_invocation: false

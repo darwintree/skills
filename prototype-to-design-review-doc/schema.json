@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "设计评审文档结构化数据",
+  "description": "由「原型 → 设计评审文档」技能在预采访与原型探索后产出，交给 render.mjs 渲染成 self-contained HTML。字段命名沿用文档语义：硬约束是封闭白名单，未列入的一切默认对设计开放。",
+  "type": "object",
+  "required": ["title", "primitives"],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "文档标题，如「支付宝汇款 · 设计评审文档」。"
+    },
+    "note": {
+      "type": "string",
+      "description": "文档级原则提示，显示在标题下方。默认说明：硬约束是封闭集，未列出的一切对设计开放，最终以设计高保真稿为准。"
+    },
+    "demoBase": {
+      "type": "string",
+      "description": "原型 demo 的基础地址，与各原语 demo 相对路径拼接成 iframe 源，如 http://localhost:6070。"
+    },
+    "meta": {
+      "type": "array",
+      "description": "迭代信息键值对：迭代范围、非目标、原型钉定（分支/commit/入口）、评审参与方等。",
+      "items": {
+        "type": "object",
+        "required": ["label", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    "concerns": {
+      "type": "array",
+      "description": "评审关注点清单：仅放仍需评审拍板、补信息或确认风险的未决事项。已明确的设计自由度、演示占位、已拍板信息不要放这里。",
+      "items": {
+        "type": "object",
+        "required": ["n", "type", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "n": { "type": "integer", "description": "序号，正文用「见关注点 #N」引用。" },
+          "type": {
+            "type": "string",
+            "description": "常用类型：边界/异常、可行性风险、待补业务确认、设计开放项。"
+          },
+          "text": { "type": "string" },
+          "primitive": { "type": "string", "description": "涉及原语名。" },
+          "owner": { "type": "string", "description": "拍板人，如 业务/后端。" },
+          "blocking": { "type": "boolean", "description": "是否阻塞开发。" }
+        }
+      }
+    },
+    "backendApis": {
+      "type": "array",
+      "description": "后端/API 能力清单：按能力定义一次，供原语用 apiRefs 引用。只写设计评审需要的能力级说明与迭代口径，不写 endpoint、method、payload、状态码等接口契约。",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "purpose", "iteration"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "稳定引用 ID，供 primitive.apiRefs 使用。"
+          },
+          "name": {
+            "type": "string",
+            "description": "后端/API 能力名称。"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "为什么需要这个后端能力。"
+          },
+          "iteration": {
+            "type": "object",
+            "description": "接口迭代口径：说明此能力是新增接口还是基于现有接口。只有现有接口才填写前向兼容性。",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["new", "existing"],
+                "description": "new=新增接口；existing=基于现有接口或现有后端能力迭代。"
+              },
+              "forwardCompatibility": {
+                "type": "string",
+                "enum": ["compatible", "incompatible", "unknown"],
+                "description": "compatible=前向兼容；incompatible=不前向兼容；unknown=接口未定或兼容性未确认。"
+              }
+            },
+            "allOf": [
+              {
+                "if": { "properties": { "source": { "const": "existing" } }, "required": ["source"] },
+                "then": { "required": ["forwardCompatibility"] }
+              },
+              {
+                "if": { "properties": { "source": { "const": "new" } }, "required": ["source"] },
+                "then": { "not": { "required": ["forwardCompatibility"] } }
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "可选补充，用于说明 endpoint 未定、格式会迭代、兼容范围等上下文；未决且需要评审拍板的事项应放 concerns。"
+          }
+        }
+      }
+    },
+    "freedoms": {
+      "type": "array",
+      "description": "全局设计自由度：适用于全文的开放项（文案、视觉、布局、控件、字段顺序、分步方式、原型占位数值等）集中写一次。",
+      "items": { "type": "string" }
+    },
+    "journeys": {
+      "type": "array",
+      "description": "旅程层：用 Mermaid 表达功能原语、状态、依赖与复用关系。节点=原语或状态，箭头=真实输入/输出依赖；无依赖步骤不要画成串行。",
+      "items": {
+        "type": "object",
+        "required": ["title", "mermaid"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "description": "图标题，如 速汇路径。" },
+          "mermaid": { "type": "string", "description": "Mermaid 源码（flowchart 等），渲染为图。" }
+        }
+      }
+    },
+    "journeyNotes": {
+      "type": "array",
+      "description": "旅程层下方的文字说明：解释并行/复用关系、入口口径等纯文本约定。",
+      "items": { "type": "string" }
+    },
+    "primitives": {
+      "type": "array",
+      "description": "功能原语：按业务能力/规则闭环切分，不按页面、组件、步骤条或 API endpoint 默认切。",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "稳定锚点 id（英文/拼音），用于侧栏定位。缺省时由 name 生成。" },
+          "name": { "type": "string", "description": "原语名，需与旅程图节点保持一致。" },
+          "kind": {
+            "type": "string",
+            "enum": ["new", "change"],
+            "description": "new=完整新增能力（用 summary + hard）；change=既有能力增量变更（用 changes + design）。"
+          },
+          "demo": { "type": "string", "description": "参考实现相对路径，与 demoBase 拼接成 iframe 源，如 /transferGlobal?rail=alipay。" },
+          "apiRefs": {
+            "type": "array",
+            "description": "本原语依赖的后端/API 能力引用列表。只填写 backendApis[].id；后端业务规则继续写入 summary/hard/cases/fieldNotes/open。",
+            "items": { "type": "string" }
+          },
+          "summary": {
+            "type": "string",
+            "description": "kind=new 时的「职责」：一句话说明依赖什么输入、完成什么业务结果、产出什么状态或数据。"
+          },
+          "changes": {
+            "type": "array",
+            "description": "kind=change 时的「变动内容」要点列表。",
+            "items": { "type": "string" }
+          },
+          "hard": {
+            "type": "array",
+            "description": "硬约束（封闭白名单）：每条都是可被 QA 判断通过/不通过的正向断言。只有作者主动声明为约束的才写入；不得从原型推断。",
+            "items": { "type": "string" }
+          },
+          "design": {
+            "type": "array",
+            "description": "留给设计（new）/ 设计新增关注（change）：本原语特有的设计开放项与关注点。",
+            "items": { "type": "string" }
+          },
+          "fieldNotes": {
+            "type": "array",
+            "description": "可选。字段参考 / 说明：原型硬编码字段或非约束性提示，实际以后端接口与详细设计为准。",
+            "items": { "type": "string" }
+          },
+          "fieldNotesTitle": {
+            "type": "string",
+            "description": "可选。fieldNotes 区块的标题，缺省为「字段参考 / 说明」。"
+          },
+          "cases": {
+            "type": "object",
+            "description": "需覆盖的情形（new）/ 新增覆盖情形（change）。来源即 QA 的异常/状态用例。",
+            "additionalProperties": false,
+            "properties": {
+              "normal": { "type": "array", "items": { "type": "string" }, "description": "正常态。" },
+              "edge": { "type": "array", "items": { "type": "string" }, "description": "异常 / 边界。" }
+            }
+          },
+          "open": {
+            "type": "string",
+            "description": "开放问题：引用评审关注点清单（如「见关注点 #1」），无则写「无」。"
+          }
+        }
+      }
+    }
+  }
+}

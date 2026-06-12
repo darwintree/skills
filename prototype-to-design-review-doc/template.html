@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设计评审文档</title>
+<!--
+  本文件由 skills/prototype-to-design-review-doc/render.mjs 从结构化 JSON 渲染生成。
+  不要手改本产物；改数据 JSON 后重跑渲染指令。
+  布局 = B（侧栏导航 + 中栏说明 + 右栏吸顶 Demo 预览）。
+  self-contained：CSS / 渲染逻辑 / 数据均内联；唯一外部依赖是 demo iframe（需 dev server）与可选的 Mermaid CDN（旅程图）。
+-->
+<style>
+  :root{
+    --indigo:#4f46e5;--indigo-50:#eef2ff;--indigo-700:#4338ca;
+    --rose-50:#fff1f2;--rose-100:#ffe4e6;--rose-200:#fecdd3;--rose-600:#e11d48;--rose-700:#be123c;
+    --emerald-100:#d1fae5;--emerald-400:#34d399;--emerald-700:#047857;
+    --amber-100:#fef3c7;--amber-400:#fbbf24;--amber-700:#b45309;
+    --z50:#fafafa;--z100:#f4f4f5;--z200:#e4e4e7;--z300:#d4d4d8;--z400:#a1a1aa;--z500:#71717a;--z600:#52525b;--z700:#3f3f46;--z900:#18181b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--z700);background:var(--z100);font-size:14px;line-height:1.5}
+  a{color:inherit}
+  .sidebar a{text-decoration:none}
+  h1,h2,h3{margin:0;color:var(--z900)}
+  ul{margin:0;padding-left:20px}
+  li{margin:2px 0}
+
+  .layout{display:grid;grid-template-columns:260px 1fr 420px;height:100vh}
+  .layout.is-overview{grid-template-columns:260px 1fr}
+
+  /* 侧栏 */
+  .sidebar{border-right:1px solid var(--z200);background:#fff;padding:16px;overflow:auto}
+  .sidebar .doc-title{font-size:14px;font-weight:700;color:var(--z900);line-height:1.35}
+  .sidebar .doc-sub{font-size:11px;color:var(--z400);margin:4px 0 16px}
+  .nav-group-label{font-size:11px;font-weight:600;color:var(--z400);letter-spacing:.04em;text-transform:uppercase;margin:0 0 4px;padding:0 12px}
+  .nav-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;cursor:pointer;font:inherit;color:var(--z600);padding:8px 12px;border-radius:8px}
+  .nav-btn:hover{background:var(--z100)}
+  .nav-btn.active{background:var(--indigo-50);color:var(--indigo-700);font-weight:600}
+  .dot{width:6px;height:6px;border-radius:99px;flex:0 0 auto}
+  .dot.new{background:var(--emerald-400)}
+  .dot.change{background:var(--amber-400)}
+  /* 旅程总览入口：一等公民，置于侧栏顶部、作为默认首屏 */
+  .journey-card{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;margin-bottom:10px;border-radius:10px;border:1px solid #e0e7ff;background:rgba(238,242,255,.6);padding:12px}
+  .journey-card:hover{background:var(--indigo-50)}
+  .journey-card.active{border-color:#c7d2fe;background:var(--indigo-50);box-shadow:0 0 0 1px #c7d2fe}
+  .journey-card .t{font-size:12px;font-weight:600;color:var(--indigo-700)}
+  .journey-card .s{font-size:11px;color:rgba(67,56,202,.8);margin-top:4px}
+  .api-overview-card{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;margin-bottom:10px;border-radius:10px;border:1px solid var(--emerald-100);background:rgba(209,250,229,.45);padding:12px}
+  .api-overview-card:hover{background:rgba(209,250,229,.7)}
+  .api-overview-card.active{border-color:var(--emerald-400);background:rgba(209,250,229,.7);box-shadow:0 0 0 1px var(--emerald-400)}
+  .api-overview-card .t{font-size:12px;font-weight:600;color:var(--emerald-700)}
+  .api-overview-card .s{font-size:11px;color:rgba(4,120,87,.8);margin-top:4px}
+  .overview-card{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;margin-bottom:16px;border-radius:10px;border:1px solid var(--rose-100);background:rgba(255,241,242,.6);padding:12px}
+  .overview-card:hover{background:var(--rose-50)}
+  .overview-card.active{border-color:var(--rose-200);background:var(--rose-50);box-shadow:0 0 0 1px var(--rose-200)}
+  .overview-card .t{font-size:12px;font-weight:600;color:var(--rose-700)}
+  .overview-card .s{font-size:11px;color:rgba(190,18,60,.8);margin-top:4px}
+
+  /* 主区 */
+  .main{overflow:auto;background:var(--z50);padding:40px}
+  .main-inner{max-width:680px;margin:0 auto}
+  .main-wide{max-width:880px;margin:0 auto}
+  .crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .crumb .idx{font-size:12px;color:var(--z400)}
+  .prim-title{font-size:24px;font-weight:700;margin:0 0 16px}
+  .card{border:1px solid var(--z200);background:#fff;border-radius:12px;padding:24px}
+
+  .blk{margin-bottom:16px}
+  .blk:last-child{margin-bottom:0}
+  .blk-label{font-size:12px;font-weight:600;margin-bottom:4px}
+  .blk-label.hard{color:var(--rose-600)}
+  .blk-label.design{color:var(--indigo-700)}
+  .blk-label.muted{color:var(--z400)}
+  .blk-label.field{color:var(--z500)}
+  .lead{font-size:14px;color:var(--z600);line-height:1.7;margin:0 0 16px}
+  .list{font-size:14px;color:var(--z700)}
+  .muted-text{font-size:14px;color:var(--z400)}
+  .cases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.cases{grid-template-columns:1fr}}
+  .case-box{background:var(--z50);border-radius:8px;padding:12px}
+  .case-box .h{font-size:12px;font-weight:600;color:var(--z500);margin-bottom:4px}
+  .case-box .list{font-size:13px;color:var(--z600)}
+  .field-box{background:var(--z50);border-radius:8px;padding:12px}
+  .api-box{background:var(--z50);border-radius:8px;padding:12px}
+  .api-ref{border-bottom:1px solid var(--z200);padding-bottom:10px;margin-bottom:10px}
+  .api-ref:last-child{border-bottom:0;padding-bottom:0;margin-bottom:0}
+  .api-name{font-size:13px;font-weight:600;color:var(--z700);margin-bottom:4px}
+  .api-id{font-size:11px;font-weight:500;color:var(--z400);margin-left:6px}
+  .api-line{font-size:13px;color:var(--z600);margin-top:2px}
+  .api-note{font-size:12px;color:var(--z400);margin-top:4px}
+  .open{font-size:12px;color:var(--z500)}
+  .open b{font-weight:600}
+  .open .flag{color:var(--rose-600);font-weight:500}
+
+  .tag{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:500;display:inline-block;white-space:nowrap}
+  .tag.new{background:var(--emerald-100);color:var(--emerald-700)}
+  .tag.change{background:var(--amber-100);color:var(--amber-700)}
+  .tag.rose{background:var(--rose-100);color:var(--rose-700)}
+  .tag.gray{background:var(--z100);color:var(--z600)}
+
+  /* 概览 */
+  .ov-h2{font-size:16px;font-weight:600;margin:0 0 12px}
+  .ov-h3{font-size:15px;font-weight:600;margin:24px 0 10px}
+  .ov-sec{margin-bottom:28px}
+  /* 旅程总览首屏 */
+  .journey-hero h2{font-size:24px;font-weight:700;margin:0 0 4px}
+  .journey-hero .sub{color:var(--z500);margin:0 0 16px}
+  .journey-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.journey-grid{grid-template-columns:1fr}}
+  .journey-grid .journey{margin-bottom:0}
+  .journey-grid .journey.full{grid-column:1 / -1}
+  .meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:760px){.meta-grid{grid-template-columns:1fr}}
+  .meta-item{border:1px solid var(--z200);background:#fff;border-radius:8px;padding:12px}
+  .meta-item dt{font-size:12px;color:var(--z400)}
+  .meta-item dd{font-size:13px;color:var(--z700);margin:4px 0 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{text-align:left;color:var(--z500);font-weight:500;border-bottom:1px solid var(--z200);padding:8px 12px 8px 0}
+  tbody td{vertical-align:top;border-bottom:1px solid var(--z100);padding:8px 12px 8px 0;color:var(--z700)}
+  .freedoms{border:1px solid var(--indigo-50);background:rgba(238,242,255,.5);border-radius:12px;padding:16px}
+  .freedoms .h{font-size:14px;font-weight:600;color:var(--indigo-700);margin-bottom:8px}
+  .freedoms .list{font-size:14px;color:rgba(67,56,202,.85)}
+  .journey{border:1px solid var(--z200);background:#fff;border-radius:12px;padding:16px;margin-bottom:16px}
+  .journey .h{font-size:13px;font-weight:600;color:var(--z700);margin-bottom:8px}
+  .journey .mermaid{overflow:auto}
+  .journey pre{margin:0;font-size:12px;color:var(--z500);white-space:pre-wrap;background:var(--z50);border-radius:8px;padding:12px}
+  .jnotes{font-size:13px;color:var(--z600)}
+  .jnotes li{margin:6px 0}
+
+  /* 右栏设备预览 */
+  .layout.has-desktop-preview{grid-template-columns:260px minmax(360px,1fr) minmax(620px,58vw)}
+  .preview{border-left:1px solid var(--z200);background:var(--z100);padding:20px;overflow:auto}
+  .preview .sticky{position:sticky;top:0}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .preview .h{font-size:12px;font-weight:600;color:var(--z500);margin:0}
+  .preview-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .preview-toggle{display:flex;align-items:center;gap:2px;border:1px solid var(--z300);background:var(--z200);border-radius:8px;padding:2px}
+  .preview-mode-btn{height:26px;border:0;border-radius:6px;background:transparent;color:var(--z500);font:inherit;font-size:12px;line-height:1;cursor:pointer;padding:0 9px}
+  .preview-mode-btn:hover{color:var(--z700);background:rgba(255,255,255,.55)}
+  .preview-mode-btn.active{background:#fff;color:var(--indigo-700);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .preview-open{height:32px;display:inline-flex;align-items:center;border:1px solid var(--z300);border-radius:8px;background:#fff;color:var(--z600);font-size:12px;font-weight:600;text-decoration:none;padding:0 10px;white-space:nowrap}
+  .preview-open:hover{border-color:var(--indigo);color:var(--indigo-700)}
+  .preview-frame{overflow:auto;padding-bottom:4px}
+  .device{background:#fff;border:1px solid var(--z300);box-shadow:0 10px 40px -12px rgba(0,0,0,.25);overflow:hidden;display:flex;flex-direction:column;margin:0 auto;flex:0 0 auto}
+  .device.mobile{width:390px;max-width:100%;border-radius:28px}
+  .device.desktop{width:960px;max-width:none;border-radius:12px}
+  .device-bar{height:34px;flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--z100);border-bottom:1px solid var(--z200);font-size:11px;color:var(--z500)}
+  .device-dot{width:9px;height:9px;border-radius:99px;background:var(--z300)}
+  .device-url{margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .device iframe{width:100%;height:720px;border:0;background:var(--z50);flex:1 1 auto}
+  .device.desktop iframe{height:640px}
+
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:var(--z300);border-radius:99px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+
+<script id="design-review-data">
+window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
+</script>
+
+<script>
+(function(){
+  var D = window.__DESIGN_REVIEW__ || {};
+  D.meta = D.meta || []; D.concerns = D.concerns || []; D.freedoms = D.freedoms || [];
+  D.backendApis = D.backendApis || [];
+  D.journeys = D.journeys || []; D.journeyNotes = D.journeyNotes || []; D.primitives = D.primitives || [];
+  var BASE = D.demoBase || "";
+
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  function pid(p,i){return p.id || ("p"+i);}
+
+  function tag(kind){return kind==="change"?'<span class="tag change">增量变更</span>':'<span class="tag new">新增能力</span>';}
+
+  function list(arr,cls){return '<ul class="'+(cls||"list")+'">'+arr.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul>";}
+
+  function demoUrl(path){return BASE + (path||"");}
+
+  function backendApiMap(){
+    var map = {};
+    D.backendApis.forEach(function(api){ map[api.id] = api; });
+    return map;
+  }
+
+  function backendApiUsers(){
+    var users = {};
+    D.primitives.forEach(function(p){
+      (p.apiRefs || []).forEach(function(ref){
+        if(!users[ref]) users[ref] = [];
+        users[ref].push(p.name);
+      });
+    });
+    return users;
+  }
+
+  function backendApiIteration(api){
+    var it = api.iteration || {};
+    var sourceLabels = {new:"新增接口", existing:"现有接口"};
+    var compatLabels = {compatible:"前向兼容", incompatible:"非前向兼容", unknown:"兼容性未定"};
+    var sourceClass = it.source === "new" ? "new" : "gray";
+    var sourceTag = '<span class="tag '+sourceClass+'">'+esc(sourceLabels[it.source] || "来源未声明")+'</span>';
+    if(it.source === "new") return sourceTag;
+    var compatClass = it.forwardCompatibility === "compatible" ? "new" : (it.forwardCompatibility === "incompatible" ? "rose" : "gray");
+    return sourceTag+' <span class="tag '+compatClass+'">'+esc(compatLabels[it.forwardCompatibility] || "兼容性未声明")+'</span>';
+  }
+
+  function device(path){
+    var url = demoUrl(path);
+    var mode = previewMode === "desktop" ? "desktop" : "mobile";
+    return ''+
+      '<div class="preview-frame">'+
+        '<div class="device '+mode+'">'+
+          '<div class="device-bar"><span class="device-dot"></span><span class="device-dot"></span><span class="device-dot"></span>'+
+            '<span class="device-url" title="'+esc(url)+'">'+esc(path||"")+'</span></div>'+
+          '<iframe src="'+esc(url)+'" title="demo" loading="lazy"></iframe>'+
+        '</div>'+
+      '</div>';
+  }
+
+  function preview(p){
+    var url = demoUrl(p.demo);
+    var desktop = previewMode === "desktop";
+    return ''+
+      '<div class="preview-head">'+
+        '<div class="h">参考实现预览</div>'+
+        '<div class="preview-actions">'+
+          '<div class="preview-toggle" role="group" aria-label="预览设备">'+
+            '<button type="button" class="preview-mode-btn'+(desktop?'':' active')+'" data-preview-mode="mobile" aria-pressed="'+(desktop?'false':'true')+'">Mobile</button>'+
+            '<button type="button" class="preview-mode-btn'+(desktop?' active':'')+'" data-preview-mode="desktop" aria-pressed="'+(desktop?'true':'false')+'">桌面</button>'+
+          '</div>'+
+          '<a class="preview-open" href="'+esc(url)+'" target="_blank" rel="noopener">外部打开</a>'+
+        '</div>'+
+      '</div>'+
+      device(p.demo);
+  }
+
+  function explain(p){
+    var change = p.kind === "change";
+    var html = "";
+    // 职责 / 变动内容
+    if(change && p.changes && p.changes.length){
+      html += '<div class="blk"><div class="blk-label muted">变动内容</div>'+list(p.changes)+'</div>';
+    } else if(p.summary){
+      html += '<p class="lead">'+esc(p.summary)+'</p>';
+    }
+    // 硬约束
+    if(p.hard && p.hard.length){
+      html += '<div class="blk"><div class="blk-label hard">硬约束（封闭白名单）</div>'+list(p.hard)+'</div>';
+    } else if(!change){
+      html += '<div class="blk"><div class="blk-label muted">硬约束</div><div class="muted-text">本原语未声明硬约束。</div></div>';
+    }
+    // 后端/API 依赖
+    if(p.apiRefs && p.apiRefs.length){
+      var apis = backendApiMap();
+      html += '<div class="blk"><div class="blk-label muted">依赖后端能力</div><div class="api-box">'+
+        p.apiRefs.map(function(ref){
+          var api = apis[ref] || {id:ref,name:ref,purpose:"未在 backendApis 中定义。"};
+          return '<div class="api-ref">'+
+            '<div class="api-name">'+esc(api.name)+'<span class="api-id">'+esc(api.id || ref)+'</span></div>'+
+            '<div class="api-line"><b>用途：</b>'+esc(api.purpose || "")+'</div>'+
+            '<div class="api-line"><b>迭代：</b>'+backendApiIteration(api)+'</div>'+
+            (api.notes?'<div class="api-note">'+esc(api.notes)+'</div>':'')+
+          '</div>';
+        }).join("")+
+      '</div></div>';
+    }
+    // 字段参考 / 说明
+    if(p.fieldNotes && p.fieldNotes.length){
+      html += '<div class="blk"><div class="blk-label field">'+esc(p.fieldNotesTitle||"字段参考 / 说明")+'</div><div class="field-box">'+list(p.fieldNotes)+'</div></div>';
+    }
+    // 留给设计 / 设计新增关注
+    if(p.design && p.design.length){
+      html += '<div class="blk"><div class="blk-label design">'+(change?"设计新增关注":"留给设计")+'</div>'+list(p.design)+'</div>';
+    }
+    // 覆盖情形
+    var c = p.cases || {};
+    if((c.normal&&c.normal.length)||(c.edge&&c.edge.length)){
+      html += '<div class="blk"><div class="blk-label muted">'+(change?"新增覆盖情形":"需覆盖的情形")+'</div><div class="cases">'+
+        '<div class="case-box"><div class="h">正常态</div>'+list(c.normal||[],"list")+'</div>'+
+        '<div class="case-box"><div class="h">异常 / 边界</div>'+list(c.edge||[],"list")+'</div>'+
+      '</div></div>';
+    }
+    // 开放问题
+    if(p.open){
+      var none = p.open==="无";
+      html += '<div class="open"><b>开放问题：</b><span class="'+(none?"":"flag")+'">'+esc(p.open)+'</span></div>';
+    }
+    return html;
+  }
+
+  function metaGrid(){
+    if(!D.meta.length) return "";
+    return '<div class="meta-grid">'+D.meta.map(function(m){
+      return '<div class="meta-item"><dt>'+esc(m.label)+'</dt><dd>'+esc(m.value)+'</dd></div>';
+    }).join("")+'</div>';
+  }
+
+  function concernsTable(){
+    if(!D.concerns.length) return '<div class="muted-text">无未决关注点。</div>';
+    return '<table><thead><tr>'+
+      '<th style="width:32px">#</th><th>类型</th><th>关注点</th><th>拍板人</th><th>阻塞?</th>'+
+      '</tr></thead><tbody>'+D.concerns.map(function(c){
+        return '<tr>'+
+          '<td style="color:var(--z400)">'+esc(c.n)+'</td>'+
+          '<td><span class="tag gray">'+esc(c.type)+'</span></td>'+
+          '<td>'+esc(c.text)+(c.primitive?'<div style="color:var(--z400);font-size:12px;margin-top:2px">涉及：'+esc(c.primitive)+'</div>':'')+'</td>'+
+          '<td style="white-space:nowrap">'+esc(c.owner||"")+'</td>'+
+          '<td>'+(c.blocking?'<span class="tag rose">是</span>':'<span class="tag gray">否</span>')+'</td>'+
+        '</tr>';
+      }).join("")+'</tbody></table>';
+  }
+
+  function backendApisTable(){
+    if(!D.backendApis.length) return '<div class="muted-text">未声明后端/API 能力依赖。</div>';
+    var users = backendApiUsers();
+    return '<table><thead><tr>'+
+      '<th style="width:22%">后端/API 能力</th><th>用途</th><th style="width:22%">迭代信息</th><th style="width:20%">原语引用</th>'+
+      '</tr></thead><tbody>'+D.backendApis.map(function(api){
+        var refNames = users[api.id] || [];
+        return '<tr>'+
+          '<td><b>'+esc(api.name)+'</b><div class="api-id" style="margin-left:0">'+esc(api.id)+'</div></td>'+
+          '<td>'+esc(api.purpose || "")+'</td>'+
+          '<td>'+backendApiIteration(api)+(api.notes?'<div class="api-note">'+esc(api.notes)+'</div>':'')+'</td>'+
+          '<td>'+esc(refNames.length ? refNames.join("、") : "未被原语引用")+'</td>'+
+        '</tr>';
+      }).join("")+'</tbody></table>';
+  }
+
+  function freedomsBlock(){
+    if(!D.freedoms.length) return "";
+    return '<div class="freedoms"><div class="h">全局设计自由度</div>'+list(D.freedoms,"list")+'</div>';
+  }
+
+  function journeysBlock(){
+    if(!D.journeys.length && !D.journeyNotes.length) return "";
+    var html = "";
+    // 首屏强调全局：前两张图并排，其余整行铺满。
+    if(D.journeys.length){
+      html += '<div class="journey-grid">'+D.journeys.map(function(j,i){
+        return '<div class="journey'+(i<2?"":" full")+'"><div class="h">'+esc(j.title)+'</div>'+
+          '<div class="mermaid">'+esc(j.mermaid)+'</div></div>';
+      }).join("")+'</div>';
+    }
+    if(D.journeyNotes.length){
+      html += '<div class="ov-h3">旅程说明</div>'+
+        '<ul class="jnotes">'+D.journeyNotes.map(function(n){return "<li>"+esc(n)+"</li>";}).join("")+'</ul>';
+    }
+    return html;
+  }
+
+  // 旅程总览：评审的入口首屏，先看全局再下钻。
+  function journeyMain(){
+    var html = '<div class="journey-hero"><h2>旅程层 · 功能地图</h2>'+
+      '<div class="sub">评审入口层：先理解端到端怎么串、哪些是真实依赖、哪些复用既有能力，再下钻到具体原语。</div></div>';
+    if(D.note) html += '<p class="lead" style="border-left:2px solid var(--z300);padding-left:12px">'+esc(D.note)+'</p>';
+    html += journeysBlock();
+    return html;
+  }
+
+  function overviewMain(){
+    var html = '<h2 class="prim-title">评审关注点与全局约束</h2>';
+    if(D.meta.length) html += '<div class="ov-sec"><h3 class="ov-h2">迭代信息</h3>'+metaGrid()+'</div>';
+    html += '<div class="ov-sec"><h3 class="ov-h2">评审关注点清单</h3>'+
+            '<div class="card" style="padding:16px">'+concernsTable()+'</div></div>';
+    if(D.freedoms.length) html += '<div class="ov-sec">'+freedomsBlock()+'</div>';
+    return html;
+  }
+
+  function backendMain(){
+    var html = '<h2 class="prim-title">后端/API 总览</h2>'+
+      '<p class="lead">按后端能力定义一次，供原语引用；这里不承担 endpoint、method、payload、状态码等接口契约职责。</p>'+
+      '<div class="card" style="padding:16px">'+backendApisTable()+'</div>';
+    return html;
+  }
+
+  function pageKey(value){
+    if(value === "journey") return "journey";
+    if(value === "backend") return "backend-apis";
+    if(value === "overview") return "review-concerns";
+    var p = D.primitives[value];
+    return "primitive-" + pid(p || {}, value);
+  }
+
+  function pageHash(value){
+    return "#" + encodeURIComponent(pageKey(value));
+  }
+
+  function parseHash(){
+    var raw = window.location.hash ? window.location.hash.slice(1) : "";
+    if(!raw) return "journey";
+    var key = raw;
+    try{ key = decodeURIComponent(raw); }catch(e){}
+    if(key === "journey") return "journey";
+    if(key === "backend-apis" || key === "backend") return "backend";
+    if(key === "review-concerns" || key === "overview") return "overview";
+    if(key.indexOf("primitive-") === 0){
+      var id = key.slice("primitive-".length);
+      for(var i=0;i<D.primitives.length;i++){
+        if(pid(D.primitives[i], i) === id) return i;
+      }
+    }
+    for(var j=0;j<D.primitives.length;j++){
+      if(pid(D.primitives[j], j) === key) return j;
+    }
+    return "journey";
+  }
+
+  function navValue(v){
+    return (v === "overview" || v === "journey" || v === "backend") ? v : (+v);
+  }
+
+  function navigateTo(value){
+    var next = navValue(value);
+    var nextHash = pageHash(next);
+    if(window.location.hash !== nextHash){
+      window.location.hash = nextHash;
+      return;
+    }
+    active = next;
+    render();
+  }
+
+  function sidebar(active){
+    var blocking = D.concerns.filter(function(c){return c.blocking;}).length;
+    var apiRefsCount = D.primitives.reduce(function(sum,p){return sum + (p.apiRefs ? p.apiRefs.length : 0);},0);
+    var nav = D.primitives.map(function(p,i){
+      var on = active===i ? " active" : "";
+      return '<a class="nav-btn'+on+'" href="'+esc(pageHash(i))+'" data-nav="'+i+'"><span class="dot '+(p.kind==="change"?"change":"new")+'"></span>'+esc(p.name)+'</a>';
+    }).join("");
+    return '<aside class="sidebar">'+
+      '<div class="doc-title">'+esc(D.title||"设计评审文档")+'</div>'+
+      '<div class="doc-sub">交付设计 · 最终以高保真稿为准</div>'+
+      '<a class="journey-card'+(active==="journey"?" active":"")+'" href="'+esc(pageHash("journey"))+'" data-nav="journey">'+
+        '<div class="t">🗺 旅程总览 · 功能地图</div>'+
+        '<div class="s">先看全局：原语 · 状态 · 依赖 · 复用</div></a>'+
+      '<a class="api-overview-card'+(active==="backend"?" active":"")+'" href="'+esc(pageHash("backend"))+'" data-nav="backend">'+
+        '<div class="t">后端/API 总览 · '+D.backendApis.length+' 项能力</div>'+
+        '<div class="s">被原语引用 '+apiRefsCount+' 次 · 点此查看</div></a>'+
+      '<a class="overview-card'+(active==="overview"?" active":"")+'" href="'+esc(pageHash("overview"))+'" data-nav="overview">'+
+        '<div class="t">评审关注点 · '+D.concerns.length+' 项未决</div>'+
+        '<div class="s">含 '+blocking+' 项阻塞开发 · 点此查看</div></a>'+
+      '<div class="nav-group-label">原语</div>'+
+      '<nav>'+nav+'</nav>'+
+    '</aside>';
+  }
+
+  var active = parseHash();
+  var previewMode = "mobile";
+
+  function setPreviewMode(mode){
+    previewMode = mode === "desktop" ? "desktop" : "mobile";
+    var desktop = previewMode === "desktop";
+    var layout = document.querySelector(".layout");
+    if(layout) layout.classList.toggle("has-desktop-preview", desktop);
+    var deviceEl = document.querySelector(".device");
+    if(deviceEl){
+      deviceEl.classList.toggle("desktop", desktop);
+      deviceEl.classList.toggle("mobile", !desktop);
+    }
+    document.querySelectorAll("[data-preview-mode]").forEach(function(btn){
+      var on = btn.getAttribute("data-preview-mode") === previewMode;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    if(active==="journey"){
+      app.innerHTML = '<div class="layout is-overview">'+sidebar("journey")+
+        '<main class="main" id="'+esc(pageKey("journey"))+'"><div class="main-wide">'+journeyMain()+'</div></main></div>';
+    } else if(active==="overview"){
+      app.innerHTML = '<div class="layout is-overview">'+sidebar("overview")+
+        '<main class="main" id="'+esc(pageKey("overview"))+'"><div class="main-wide">'+overviewMain()+'</div></main></div>';
+    } else if(active==="backend"){
+      app.innerHTML = '<div class="layout is-overview">'+sidebar("backend")+
+        '<main class="main" id="'+esc(pageKey("backend"))+'"><div class="main-wide">'+backendMain()+'</div></main></div>';
+    } else {
+      var p = D.primitives[active];
+      app.innerHTML = '<div class="layout'+(previewMode==="desktop"?" has-desktop-preview":"")+'">'+sidebar(active)+
+        '<main class="main" id="'+esc(pageKey(active))+'"><div class="main-inner">'+
+          '<div class="crumb">'+tag(p.kind)+'<span class="idx">原语 '+(active+1)+' / '+D.primitives.length+'</span></div>'+
+          '<h2 class="prim-title">'+esc(p.name)+'</h2>'+
+          '<div class="card">'+explain(p)+'</div>'+
+        '</div></main>'+
+        '<aside class="preview"><div class="sticky">'+preview(p)+'</div></aside>'+
+      '</div>';
+    }
+    runMermaid();
+  }
+
+  function runMermaid(){
+    if(active!=="journey" || !D.journeys.length) return;
+    var nodes = document.querySelectorAll(".mermaid");
+    if(!window.mermaid){ // 离线降级：展示源码
+      nodes.forEach(function(n){var pre=document.createElement("pre");pre.textContent=n.textContent;n.replaceWith(pre);});
+      return;
+    }
+    try{
+      window.mermaid.initialize({startOnLoad:false,securityLevel:"loose",flowchart:{htmlLabels:true}});
+      window.mermaid.run({nodes:nodes});
+    }catch(e){/* 渲染失败时保留源码文本 */}
+  }
+
+  document.addEventListener("click",function(e){
+    var modeBtn = e.target.closest("[data-preview-mode]");
+    if(modeBtn){
+      setPreviewMode(modeBtn.getAttribute("data-preview-mode"));
+      return;
+    }
+    var btn = e.target.closest("[data-nav]");
+    if(!btn) return;
+    e.preventDefault();
+    var v = btn.getAttribute("data-nav");
+    navigateTo(v);
+  });
+
+  window.addEventListener("hashchange",function(){
+    active = parseHash();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
