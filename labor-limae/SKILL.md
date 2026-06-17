@@ -1,6 +1,6 @@
 ---
 name: labor-limae
-description: "Polish existing drafts with the Labor Limae method: clarify intent, improve structure, raise information density, remove redundancy, record each workflow step in a system temporary trace file, and make the document easier to understand, judge, decide from, or act on. Use when the user asks to refine, tighten, rewrite, edit, polish, or review a memo, spec, proposal, PRD, report, article, guide, or similar draft."
+description: "Polish existing drafts with the Labor Limae method: clarify intent, improve structure, raise information density, remove redundancy, choose Frame-evoking words, record each workflow step in a system temporary trace file, and make the document easier to understand, judge, decide from, or act on. Use when the user asks to refine, tighten, rewrite, edit, polish, or review a memo, spec, proposal, PRD, report, article, guide, or similar draft."
 ---
 
 # Labor Limae
@@ -16,10 +16,9 @@ Before step 1, create a temporary Markdown trace file in the operating system te
 The trace must:
 
 - Use the same seven step titles, numbering, and order as the Workflow.
-- Record concrete results: intent sentence, paragraph propositions, density decisions, dilution fixes, redundancy merges, chosen Leitwörter, and validation answers.
+- Record concrete results: intent sentence, paragraph propositions, density decisions, dilution fixes, redundancy merges, chosen Frame-evoking words, candidate comparisons, and validation answers.
 - If a step produces no edit, record the inspected result and `No change needed`.
 - Omit no stages and add no extra stages.
-- Include the trace file path in the final response.
 
 ## Workflow
 
@@ -55,11 +54,13 @@ Complete each revision round in this order. Preserve source facts and constraint
    - Merge sentences with duplicate functions and the same judgment.
    - If a claim lacks reason, evidence, boundary, or action, add the minimum needed or flag the gap.
 
-6. Choose Leitwörter.
-   - Prefer existing, widely known keywords already present in the document or domain.
-   - Use those keywords consistently as leading terms for the document's core judgments.
-   - Keep keywords that compress information, evoke useful context, or guide revision choices.
-   - Avoid new labels unless they materially reduce repeated reasoning.
+6. Choose Frame-evoking words.
+   - Identify the specific terms that carry the document's core concepts, judgments, roles, or actions.
+   - For each important concept, test 2-4 candidate words, including existing document or domain terms when available.
+   - For each candidate, write the associations it evokes: likely frame, implied actor or action, standard, risk, audience expectation, and adjacent concepts.
+   - Compare candidates for precision, familiarity, information compression, usefulness for revision choices, and risk of misleading connotations.
+   - Select words that evoke the most useful frame for the intended reader and use them consistently as leading terms.
+   - Avoid new labels unless they materially reduce repeated reasoning and their associations are clearer than existing terms.
 
 7. Polish and validate.
    - Split long sentences.
@@ -71,6 +72,8 @@ Complete each revision round in this order. Preserve source facts and constraint
 
 ## Output
 
-When editing directly, return the revised document or patch. For large rewrites, briefly note major deletions, moves, additions, and chosen Leitwörter.
+When editing directly, return the revised document or patch. For large rewrites, briefly note major deletions, moves, additions, and chosen Frame-evoking words.
 
 When reviewing without editing, report the assumed intent, skeleton issues, density or redundancy issues, and recommended edits.
+
+Always include the trace file path in the final response.
