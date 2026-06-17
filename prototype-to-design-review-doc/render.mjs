@@ -53,6 +53,113 @@ if (data.backendApis == null) {
 const apiIds = new Set();
 const apiSources = new Set(["new", "existing"]);
 const apiForwardCompatibility = new Set(["compatible", "incompatible", "unknown"]);
+const shapeKinds = new Set(["query", "body", "response"]);
+const highlightKinds = new Set(["added", "removed", "changed"]);
+
+function isPlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function failAt(scope, msg) {
+  fail(`${scope}: ${msg}`);
+}
+
+function parsePath(path, scope) {
+  if (typeof path !== "string" || !path) {
+    failAt(scope, "highlight.path 必须是非空字符串。");
+  }
+  const parts = path.split(".");
+  parts.forEach((part) => {
+    if (!part || part === "[]") failAt(scope, `highlight.path 不合法：${path}`);
+    if (part.includes("[]") && !part.endsWith("[]")) {
+      failAt(scope, `数组通配只支持 segment[] 形式：${path}`);
+    }
+  });
+  return parts;
+}
+
+function isPrefixPath(a, b) {
+  if (a.length >= b.length) return false;
+  return a.every((part, index) => part === b[index]);
+}
+
+function pathExists(value, parts) {
+  if (!parts.length) return true;
+  const [head, ...rest] = parts;
+  if (head.endsWith("[]")) {
+    const key = head.slice(0, -2);
+    if (!isPlainObject(value) || !Object.prototype.hasOwnProperty.call(value, key)) return false;
+    const arr = value[key];
+    if (!Array.isArray(arr) || arr.length === 0) return false;
+    return arr.every((item) => pathExists(item, rest));
+  }
+  if (!isPlainObject(value) || !Object.prototype.hasOwnProperty.call(value, head)) return false;
+  return pathExists(value[head], rest);
+}
+
+function normalizeShapeVariants(value, scope) {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value;
+  if (isPlainObject(value)) return [value];
+  failAt(scope, "shape 段必须是对象或对象数组。");
+}
+
+function validateShapeVariant(variant, scope) {
+  if (!isPlainObject(variant)) failAt(scope, "shape variant 必须是对象。");
+  if (variant.title != null && typeof variant.title !== "string") {
+    failAt(scope, "shape variant.title 必须是字符串。");
+  }
+  if (typeof variant.code !== "string" || !variant.code) {
+    failAt(scope, "shape variant.code 必须是非空 JSON 字符串。");
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(variant.code);
+  } catch (e) {
+    failAt(scope, `shape variant.code 不是合法 JSON：${e.message}`);
+  }
+  if (variant.highlights == null) variant.highlights = [];
+  if (!Array.isArray(variant.highlights)) {
+    failAt(scope, "shape variant.highlights 必须是数组。");
+  }
+
+  const seen = [];
+  variant.highlights.forEach((highlight, index) => {
+    const hScope = `${scope}.highlights[${index}]`;
+    if (!isPlainObject(highlight)) failAt(hScope, "highlight 必须是对象。");
+    if (!highlightKinds.has(highlight.kind)) {
+      failAt(hScope, 'highlight.kind 必须是 "added"、"removed" 或 "changed"。');
+    }
+    const parts = parsePath(highlight.path, hScope);
+    if (!pathExists(parsed, parts)) {
+      failAt(hScope, `highlight.path 在 code 中不存在：${highlight.path}`);
+    }
+    const duplicate = seen.find((item) => item.path === highlight.path);
+    if (duplicate) {
+      failAt(hScope, `highlight.path 重复：${highlight.path}`);
+    }
+    const conflict = seen.find((item) => isPrefixPath(item.parts, parts) || isPrefixPath(parts, item.parts));
+    if (conflict) {
+      failAt(hScope, `highlight.path 与 ${conflict.path} 存在祖先/后代冲突：${highlight.path}`);
+    }
+    seen.push({ path: highlight.path, parts });
+  });
+}
+
+function validateApiShapes(api, apiIndex) {
+  if (api.shapes == null) return;
+  const scope = `backendApis[${apiIndex}] (${api.id}).shapes`;
+  if (!isPlainObject(api.shapes)) failAt(scope, "shapes 必须是对象。");
+  Object.entries(api.shapes).forEach(([kind, value]) => {
+    if (!shapeKinds.has(kind)) {
+      failAt(scope, `只支持 query、body、response，收到：${kind}`);
+    }
+    normalizeShapeVariants(value, `${scope}.${kind}`).forEach((variant, index) => {
+      validateShapeVariant(variant, `${scope}.${kind}[${index}]`);
+    });
+  });
+}
+
 data.backendApis.forEach((api, i) => {
   if (!api || typeof api !== "object") fail(`backendApis[${i}] 必须是对象。`);
   if (typeof api.id !== "string" || !api.id) fail(`backendApis[${i}] 缺少 id。`);
@@ -74,6 +181,7 @@ data.backendApis.forEach((api, i) => {
     fail(`backendApis[${i}] (${api.id}) 的 iteration.forwardCompatibility 必须是 "compatible"、"incompatible" 或 "unknown"。`);
   }
   if (apiIds.has(api.id)) fail(`backendApis id 重复：${api.id}`);
+  validateApiShapes(api, i);
   apiIds.add(api.id);
 });
 

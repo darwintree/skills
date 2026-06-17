@@ -51,9 +51,26 @@
         }
       }
     },
+    "changelogs": {
+      "type": "array",
+      "description": "变更记录：按日期记录文档自身发生了什么改动，只写改了的内容。",
+      "items": {
+        "type": "object",
+        "required": ["date", "items"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string", "description": "变更日期，如 2026-06-16。" },
+          "items": {
+            "type": "array",
+            "description": "当天变更内容，使用面向评审参与者的人话描述。",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
     "backendApis": {
       "type": "array",
-      "description": "后端/API 能力清单：按能力定义一次，供原语用 apiRefs 引用。只写设计评审需要的能力级说明与迭代口径，不写 endpoint、method、payload、状态码等接口契约。",
+      "description": "后端/API 能力清单：按能力定义一次，供原语用 apiRefs 引用。可选择性提供 query/body/response 形状，用于设计评审中查看接口变化。",
       "items": {
         "type": "object",
         "required": ["id", "name", "purpose", "iteration"],
@@ -102,6 +119,16 @@
           "notes": {
             "type": "string",
             "description": "可选补充，用于说明 endpoint 未定、格式会迭代、兼容范围等上下文；未决且需要评审拍板的事项应放 concerns。"
+          },
+          "shapes": {
+            "type": "object",
+            "description": "可选。接口形状展示，支持 query/body/response。每段可为单个 shape variant，或多个 variant 数组。",
+            "additionalProperties": false,
+            "properties": {
+              "query": { "$ref": "#/definitions/apiShapeSlot" },
+              "body": { "$ref": "#/definitions/apiShapeSlot" },
+              "response": { "$ref": "#/definitions/apiShapeSlot" }
+            }
           }
         }
       }
@@ -190,6 +217,50 @@
           "open": {
             "type": "string",
             "description": "开放问题：引用评审关注点清单（如「见关注点 #1」），无则写「无」。"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apiShapeSlot": {
+      "oneOf": [
+        { "$ref": "#/definitions/apiShapeVariant" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/apiShapeVariant" }
+        }
+      ]
+    },
+    "apiShapeVariant": {
+      "type": "object",
+      "required": ["code"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "可选。多变体标题，如 ALIPAY_ACCOUNT。"
+        },
+        "code": {
+          "type": "string",
+          "description": "必须是合法 JSON 字符串。"
+        },
+        "highlights": {
+          "type": "array",
+          "description": "字段高亮，仅作为显示标识。path 支持 a.b、items[].field、fiatProfiles.CNY:ALIPAY_ACCOUNT。",
+          "items": {
+            "type": "object",
+            "required": ["kind", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["added", "removed", "changed"]
+              },
+              "path": {
+                "type": "string"
+              }
+            }
           }
         }
       }

@@ -90,6 +90,27 @@
   .api-id{font-size:11px;font-weight:500;color:var(--z400);margin-left:6px}
   .api-line{font-size:13px;color:var(--z600);margin-top:2px}
   .api-note{font-size:12px;color:var(--z400);margin-top:4px}
+  .backend-list{display:grid;gap:16px}
+  .backend-card{border:1px solid var(--z200);background:#fff;border-radius:12px;padding:16px}
+  .backend-card-head{display:grid;grid-template-columns:minmax(220px,1.1fr) minmax(280px,1.4fr);gap:16px;align-items:start}
+  @media (max-width:900px){.backend-card-head{grid-template-columns:1fr}}
+  .backend-title{font-size:15px;font-weight:700;color:var(--z900);margin-bottom:4px}
+  .backend-purpose{font-size:13px;color:var(--z600);line-height:1.6}
+  .backend-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .backend-users{font-size:12px;color:var(--z500);margin-top:8px}
+  .api-shapes{margin-top:10px}
+  .api-shapes summary{cursor:pointer;color:var(--z600);font-size:12px;font-weight:600;user-select:none}
+  .api-shapes summary:hover{color:var(--z900)}
+  .backend-card > .api-shapes{margin-top:14px;border-top:1px solid var(--z100);padding-top:12px}
+  .shape-section{margin-top:10px}
+  .shape-title{font-size:11px;font-weight:700;color:var(--z500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  .shape-variant{margin:8px 0 12px}
+  .shape-variant-title{font-size:12px;font-weight:600;color:var(--z600);margin-bottom:4px}
+  .shape-code{margin:0;background:#f8fafc;border:1px solid var(--z200);border-radius:8px;padding:10px 0;overflow:auto;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#1f2937}
+  .shape-line{display:block;white-space:pre;padding:0 12px;border-left:3px solid transparent}
+  .shape-line.hl-added{background:#ecfdf5;border-left-color:var(--emerald-400)}
+  .shape-line.hl-changed{background:#fffbeb;border-left-color:var(--amber-400)}
+  .shape-line.hl-removed{background:#fff1f2;border-left-color:var(--rose-600);text-decoration:line-through;text-decoration-thickness:1px}
   .open{font-size:12px;color:var(--z500)}
   .open b{font-weight:600}
   .open .flag{color:var(--rose-600);font-weight:500}
@@ -122,6 +143,10 @@
   .freedoms{border:1px solid var(--indigo-50);background:rgba(238,242,255,.5);border-radius:12px;padding:16px}
   .freedoms .h{font-size:14px;font-weight:600;color:var(--indigo-700);margin-bottom:8px}
   .freedoms .list{font-size:14px;color:rgba(67,56,202,.85)}
+  .changelog-list{display:grid;gap:12px}
+  .changelog-item{border:1px solid var(--z200);background:#fff;border-radius:12px;padding:16px}
+  .changelog-date{font-size:13px;font-weight:700;color:var(--z900);margin-bottom:8px}
+  .changelog-item .list{font-size:14px;color:var(--z700)}
   .journey{border:1px solid var(--z200);background:#fff;border-radius:12px;padding:16px;margin-bottom:16px}
   .journey .h{font-size:13px;font-weight:600;color:var(--z700);margin-bottom:8px}
   .journey .mermaid{overflow:auto}
@@ -167,7 +192,7 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
 <script>
 (function(){
   var D = window.__DESIGN_REVIEW__ || {};
-  D.meta = D.meta || []; D.concerns = D.concerns || []; D.freedoms = D.freedoms || [];
+  D.meta = D.meta || []; D.concerns = D.concerns || []; D.freedoms = D.freedoms || []; D.changelogs = D.changelogs || [];
   D.backendApis = D.backendApis || [];
   D.journeys = D.journeys || []; D.journeyNotes = D.journeyNotes || []; D.primitives = D.primitives || [];
   var BASE = D.demoBase || "";
@@ -179,7 +204,13 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
 
   function list(arr,cls){return '<ul class="'+(cls||"list")+'">'+arr.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul>";}
 
-  function demoUrl(path){return BASE + (path||"");}
+  function demoUrl(path){
+    var p = path || "";
+    if(!p) return BASE;
+    if(/^https?:\/\//.test(p)) return p;
+    if(!BASE) return p;
+    return BASE.replace(/\/+$/,"") + "/" + String(p).replace(/^\/+/,"");
+  }
 
   function backendApiMap(){
     var map = {};
@@ -207,6 +238,131 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
     if(it.source === "new") return sourceTag;
     var compatClass = it.forwardCompatibility === "compatible" ? "new" : (it.forwardCompatibility === "incompatible" ? "rose" : "gray");
     return sourceTag+' <span class="tag '+compatClass+'">'+esc(compatLabels[it.forwardCompatibility] || "兼容性未声明")+'</span>';
+  }
+
+  function shapeSlots(shapes){
+    var labels = {query:"Query", body:"Body", response:"Response"};
+    return ["query","body","response"].filter(function(kind){return shapes && shapes[kind];}).map(function(kind){
+      return {kind:kind,label:labels[kind],variants:Array.isArray(shapes[kind]) ? shapes[kind] : [shapes[kind]]};
+    });
+  }
+
+  function isEmptyShapeVariant(variant){
+    try{
+      var parsed = JSON.parse(variant.code);
+      return (Array.isArray(parsed) && parsed.length === 0) ||
+        (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Object.keys(parsed).length === 0);
+    }catch(e){
+      return false;
+    }
+  }
+
+  function pathParts(path){
+    return String(path||"").split(".");
+  }
+
+  function highlightMap(highlights){
+    var map = {};
+    (highlights || []).forEach(function(h){ map[h.path] = h.kind; });
+    return map;
+  }
+
+  function childPath(base, key){
+    return base ? base + "." + key : key;
+  }
+
+  function arrayPath(base){
+    return base + "[]";
+  }
+
+  function inheritedHighlight(path, map){
+    if(!path) return "";
+    var parts = pathParts(path);
+    for(var i=parts.length;i>0;i--){
+      var candidate = parts.slice(0,i).join(".");
+      if(map[candidate]) return map[candidate];
+    }
+    return "";
+  }
+
+  function shapeLines(value, path, map, level){
+    var lines = [];
+    var indent = "  ".repeat(level || 0);
+    var own = inheritedHighlight(path, map);
+    function push(text, kind){ lines.push({text:text, kind:kind || own}); }
+    if(Array.isArray(value)){
+      push(indent + "[", own);
+      value.forEach(function(item, index){
+        var childLines = shapeLines(item, arrayPath(path), map, (level || 0) + 1);
+        childLines.forEach(function(line, lineIndex){
+          var suffix = (index < value.length - 1 && lineIndex === childLines.length - 1) ? "," : "";
+          lines.push({text:line.text + suffix, kind:line.kind || own});
+        });
+      });
+      push(indent + "]", own);
+      return lines;
+    }
+    if(value && typeof value === "object"){
+      var keys = Object.keys(value);
+      push(indent + "{", own);
+      keys.forEach(function(key, index){
+        var nextPath = childPath(path, key);
+        var keyKind = inheritedHighlight(nextPath, map) || own;
+        var child = value[key];
+        var comma = index < keys.length - 1 ? "," : "";
+        if(child && typeof child === "object"){
+          var childLines = shapeLines(child, nextPath, map, (level || 0) + 1);
+          childLines.forEach(function(line, lineIndex){
+            if(lineIndex === 0){
+              lines.push({text:"  ".repeat((level || 0) + 1) + JSON.stringify(key) + ": " + line.text.trimStart(), kind:line.kind || keyKind});
+            } else if(lineIndex === childLines.length - 1){
+              lines.push({text:line.text + comma, kind:line.kind || keyKind});
+            } else {
+              lines.push({text:line.text, kind:line.kind || keyKind});
+            }
+          });
+        } else {
+          lines.push({text:"  ".repeat((level || 0) + 1) + JSON.stringify(key) + ": " + JSON.stringify(child) + comma, kind:keyKind});
+        }
+      });
+      push(indent + "}", own);
+      return lines;
+    }
+    push(indent + JSON.stringify(value), own);
+    return lines;
+  }
+
+  function renderShapeCode(variant){
+    var parsed;
+    try{ parsed = JSON.parse(variant.code); }
+    catch(e){ return '<pre class="shape-code"><span class="shape-line">'+esc(variant.code)+'</span></pre>'; }
+    var map = highlightMap(variant.highlights);
+    return '<pre class="shape-code">'+shapeLines(parsed, "", map, 0).map(function(line){
+      return '<span class="shape-line'+(line.kind ? " hl-"+esc(line.kind) : "")+'">'+esc(line.text)+'</span>';
+    }).join("")+'</pre>';
+  }
+
+  function apiShapesBlock(api, openByDefault){
+    var slots = shapeSlots(api.shapes).map(function(slot){
+      return {
+        kind: slot.kind,
+        label: slot.label,
+        variants: slot.variants.filter(function(variant){ return !isEmptyShapeVariant(variant); })
+      };
+    }).filter(function(slot){ return slot.variants.length; });
+    if(!slots.length) return "";
+    return '<details class="api-shapes"'+(openByDefault ? " open" : "")+'><summary>接口形状</summary>'+
+      slots.map(function(slot){
+        return '<div class="shape-section"><div class="shape-title">'+esc(slot.label)+'</div>'+
+          slot.variants.map(function(variant){
+            return '<div class="shape-variant">'+
+              (variant.title ? '<div class="shape-variant-title">'+esc(variant.title)+'</div>' : '')+
+              renderShapeCode(variant)+
+            '</div>';
+          }).join("")+
+        '</div>';
+      }).join("")+
+    '</details>';
   }
 
   function device(path){
@@ -265,6 +421,7 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
             '<div class="api-line"><b>用途：</b>'+esc(api.purpose || "")+'</div>'+
             '<div class="api-line"><b>迭代：</b>'+backendApiIteration(api)+'</div>'+
             (api.notes?'<div class="api-note">'+esc(api.notes)+'</div>':'')+
+            apiShapesBlock(api, false)+
           '</div>';
         }).join("")+
       '</div></div>';
@@ -315,25 +472,42 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
       }).join("")+'</tbody></table>';
   }
 
-  function backendApisTable(){
+  function backendApisList(){
     if(!D.backendApis.length) return '<div class="muted-text">未声明后端/API 能力依赖。</div>';
     var users = backendApiUsers();
-    return '<table><thead><tr>'+
-      '<th style="width:22%">后端/API 能力</th><th>用途</th><th style="width:22%">迭代信息</th><th style="width:20%">原语引用</th>'+
-      '</tr></thead><tbody>'+D.backendApis.map(function(api){
+    return '<div class="backend-list">'+D.backendApis.map(function(api){
         var refNames = users[api.id] || [];
-        return '<tr>'+
-          '<td><b>'+esc(api.name)+'</b><div class="api-id" style="margin-left:0">'+esc(api.id)+'</div></td>'+
-          '<td>'+esc(api.purpose || "")+'</td>'+
-          '<td>'+backendApiIteration(api)+(api.notes?'<div class="api-note">'+esc(api.notes)+'</div>':'')+'</td>'+
-          '<td>'+esc(refNames.length ? refNames.join("、") : "未被原语引用")+'</td>'+
-        '</tr>';
-      }).join("")+'</tbody></table>';
+        return '<section class="backend-card">'+
+          '<div class="backend-card-head">'+
+            '<div>'+
+              '<div class="backend-title">'+esc(api.name)+'</div>'+
+              '<div class="api-id" style="margin-left:0">'+esc(api.id)+'</div>'+
+              '<div class="backend-meta">'+backendApiIteration(api)+'</div>'+
+            '</div>'+
+            '<div>'+
+              '<div class="backend-purpose">'+esc(api.purpose || "")+'</div>'+
+              (api.notes?'<div class="api-note">'+esc(api.notes)+'</div>':'')+
+              '<div class="backend-users"><b>原语引用：</b>'+esc(refNames.length ? refNames.join("、") : "未被原语引用")+'</div>'+
+            '</div>'+
+          '</div>'+
+          apiShapesBlock(api, false)+
+        '</section>';
+      }).join("")+'</div>';
   }
 
   function freedomsBlock(){
     if(!D.freedoms.length) return "";
     return '<div class="freedoms"><div class="h">全局设计自由度</div>'+list(D.freedoms,"list")+'</div>';
+  }
+
+  function changelogsBlock(){
+    if(!D.changelogs.length) return "";
+    return '<div class="changelog-list">'+D.changelogs.map(function(log){
+      return '<div class="changelog-item">'+
+        '<div class="changelog-date">'+esc(log.date || "未标日期")+'</div>'+
+        list(log.items || [])+
+      '</div>';
+    }).join("")+'</div>';
   }
 
   function journeysBlock(){
@@ -371,10 +545,17 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
     return html;
   }
 
+  function changelogMain(){
+    var html = '<h2 class="prim-title">变更记录</h2>'+
+      '<p class="lead">只记录文档相对上一轮确实改过的内容，不重复说明未变化的规则。</p>';
+    html += D.changelogs.length ? changelogsBlock() : '<div class="muted-text">暂无变更记录。</div>';
+    return html;
+  }
+
   function backendMain(){
     var html = '<h2 class="prim-title">后端/API 总览</h2>'+
       '<p class="lead">按后端能力定义一次，供原语引用；这里不承担 endpoint、method、payload、状态码等接口契约职责。</p>'+
-      '<div class="card" style="padding:16px">'+backendApisTable()+'</div>';
+      backendApisList();
     return html;
   }
 
@@ -382,6 +563,7 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
     if(value === "journey") return "journey";
     if(value === "backend") return "backend-apis";
     if(value === "overview") return "review-concerns";
+    if(value === "changelogs") return "changelogs";
     var p = D.primitives[value];
     return "primitive-" + pid(p || {}, value);
   }
@@ -398,6 +580,7 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
     if(key === "journey") return "journey";
     if(key === "backend-apis" || key === "backend") return "backend";
     if(key === "review-concerns" || key === "overview") return "overview";
+    if(key === "changelogs" || key === "changelog") return "changelogs";
     if(key.indexOf("primitive-") === 0){
       var id = key.slice("primitive-".length);
       for(var i=0;i<D.primitives.length;i++){
@@ -411,7 +594,7 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
   }
 
   function navValue(v){
-    return (v === "overview" || v === "journey" || v === "backend") ? v : (+v);
+    return (v === "overview" || v === "journey" || v === "backend" || v === "changelogs") ? v : (+v);
   }
 
   function navigateTo(value){
@@ -441,6 +624,9 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
       '<a class="api-overview-card'+(active==="backend"?" active":"")+'" href="'+esc(pageHash("backend"))+'" data-nav="backend">'+
         '<div class="t">后端/API 总览 · '+D.backendApis.length+' 项能力</div>'+
         '<div class="s">被原语引用 '+apiRefsCount+' 次 · 点此查看</div></a>'+
+      (D.changelogs.length ? '<a class="overview-card'+(active==="changelogs"?" active":"")+'" href="'+esc(pageHash("changelogs"))+'" data-nav="changelogs">'+
+        '<div class="t">变更记录 · '+D.changelogs.length+' 次更新</div>'+
+        '<div class="s">只记录实际改动 · 点此查看</div></a>' : '')+
       '<a class="overview-card'+(active==="overview"?" active":"")+'" href="'+esc(pageHash("overview"))+'" data-nav="overview">'+
         '<div class="t">评审关注点 · '+D.concerns.length+' 项未决</div>'+
         '<div class="s">含 '+blocking+' 项阻塞开发 · 点此查看</div></a>'+
@@ -480,6 +666,9 @@ window.__DESIGN_REVIEW__ = __DESIGN_REVIEW_DATA__;
     } else if(active==="backend"){
       app.innerHTML = '<div class="layout is-overview">'+sidebar("backend")+
         '<main class="main" id="'+esc(pageKey("backend"))+'"><div class="main-wide">'+backendMain()+'</div></main></div>';
+    } else if(active==="changelogs"){
+      app.innerHTML = '<div class="layout is-overview">'+sidebar("changelogs")+
+        '<main class="main" id="'+esc(pageKey("changelogs"))+'"><div class="main-wide">'+changelogMain()+'</div></main></div>';
     } else {
       var p = D.primitives[active];
       app.innerHTML = '<div class="layout'+(previewMode==="desktop"?" has-desktop-preview":"")+'">'+sidebar(active)+
