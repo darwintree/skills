@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cold-Read Review"
+  short_description: "Review docs with cold-read method"
+  default_prompt: "Use $cold-read-review to review this document."
