@@ -1,22 +1,30 @@
 ---
 name: review-comment-triage
-description: Provides orthogonal rules for deciding whether review feedback should change code, using testable claims as the required input format. Use when handling PR review comments, GitHub review threads, requested changes, reviewer suggestions, or any agent workflow that must evaluate review feedback without blindly accepting technically correct but low-value changes.
+description: Triage PR review feedback by rewriting comments into testable claims, evaluating orthogonal rules, and choosing whether to fix code, clarify code, encode a contract, make no change, or defer. Use when handling PR review comments, GitHub review threads, requested changes, reviewer suggestions, or agent workflows that must avoid blindly accepting technically correct but low-value changes.
 ---
 
 # Review Comment Triage
-Use this skill as a judgment framework. It supplies independent rules; the agent supplies testable claims extracted from review comments.
 
-## Evaluation Model
-A review comment is not an instruction. It is raw input that must be rewritten into one or more testable claims before any code change.
+Use this skill as a judgment framework for review feedback. It supplies orthogonal rules; the agent supplies testable claims extracted from comments.
 
-Each claim must have:
+## Claim Model
+Treat each review comment as raw input, not an instruction. Rewrite it into one or more testable claims before changing code.
+
+Each testable claim must have:
 
 - **Subject**: the exact behavior, contract, type, interface, shape, or design being judged.
 - **Predicate**: the alleged defect, missing property, inconsistency, risk, or maintainability cost.
 - **Evidence path**: the code path, test, type, schema, runtime contract, local convention, or command that could confirm or falsify the predicate.
 - **Consequence**: the concrete failure, confusion, or maintenance cost if the predicate is true and ignored.
 
-For each claim, evaluate every applicable rule as `pass`, `fail`, or `unknown`. Do not treat one rule passing as enough to accept the comment.
+For each claim, evaluate every applicable rule as `pass`, `fail`, or `unknown`. A single passing rule is not enough to accept the comment.
+
+## Triage Workflow
+
+1. Extract every testable claim from the comment.
+2. Identify the evidence path needed to confirm or falsify each predicate.
+3. Evaluate the orthogonal rules against the current code, tests, schemas, types, contracts, and local conventions.
+4. Choose and report the decision from the rule results.
 
 ## Orthogonal Rules
 
@@ -70,7 +78,7 @@ Choose the action from the rule results, not from reviewer confidence.
 - **Defer**: any rule is unknown after reasonable inspection, or Ownership fails because the issue belongs outside this PR.
 
 ## Low-Value Correct Comments
-A comment is "technically correct but low value" when Validity passes but at least one of these rules fails:
+A comment can be true and still not justify implementation. Treat it as a low-value correct comment when Validity passes but any of these filters fail:
 
 - Reachability: the scenario is not reachable.
 - Materiality: the consequence does not matter enough.
