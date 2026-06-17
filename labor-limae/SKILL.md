@@ -1,0 +1,76 @@
+---
+name: labor-limae
+description: "Polish existing drafts with the Labor Limae method: clarify intent, improve structure, raise information density, remove redundancy, record each workflow step in a system temporary trace file, and make the document easier to understand, judge, decide from, or act on. Use when the user asks to refine, tighten, rewrite, edit, polish, or review a memo, spec, proposal, PRD, report, article, guide, or similar draft."
+---
+
+# Labor Limae
+
+Use this skill to revise an existing document in complete rounds. Each round should make the reader understand faster, judge more accurately, and act with less effort.
+
+Core rule: fix intent before structure; fix structure before language; delete surplus before adding detail; make the document clear before making it elegant.
+
+## Step Trace
+
+Before step 1, create a temporary Markdown trace file in the operating system temp directory, such as `$env:TEMP` on Windows or `/tmp` on Unix-like systems. Append the result of each numbered workflow step immediately after completing that step.
+
+The trace must:
+
+- Use the same seven step titles, numbering, and order as the Workflow.
+- Record concrete results: intent sentence, paragraph propositions, density decisions, dilution fixes, redundancy merges, chosen Leitwörter, and validation answers.
+- If a step produces no edit, record the inspected result and `No change needed`.
+- Omit no stages and add no extra stages.
+- Include the trace file path in the final response.
+
+## Workflow
+
+Complete each revision round in this order. Preserve source facts and constraints. Do not invent unsupported details. When needed information is missing, flag the gap or add a clearly marked assumption.
+
+1. Define the intent.
+   - State in one sentence what the reader should understand, judge, decide, or execute.
+   - Keep content that serves this intent.
+   - Delete, compress, move, or flag weakly related content.
+   - If the document has competing intents, state the assumed primary intent before editing.
+
+2. Extract the skeleton.
+   - Compress each paragraph into one core proposition.
+   - Read the propositions in sequence.
+   - If the sequence is clear, revise sentences next.
+   - If the sequence is unclear, reorder, merge, split, or delete sections before polishing language.
+   - Do not try to solve structural problems with nicer wording.
+
+3. Check information density.
+   - For each sentence, identify whether it provides a fact, reason, evidence, boundary, example, risk, consequence, standard, or action.
+   - Delete sentences with no effective information.
+   - Merge repeated information.
+   - Add only the missing detail the reader needs to judge or act.
+
+4. Fix information dilution.
+   - Treat dilution as added length without added effective information.
+   - Compress each diluted paragraph into one core proposition.
+   - Restore only necessary facts, reasons, evidence, boundaries, or actions.
+   - Prefer one precise sentence over several softer sentences with the same information.
+
+5. Remove redundancy.
+   - Label each sentence's function: claim, reason, evidence, boundary, example, risk, consequence, standard, action, or transition.
+   - Merge sentences with duplicate functions and the same judgment.
+   - If a claim lacks reason, evidence, boundary, or action, add the minimum needed or flag the gap.
+
+6. Choose Leitwörter.
+   - Prefer existing, widely known keywords already present in the document or domain.
+   - Use those keywords consistently as leading terms for the document's core judgments.
+   - Keep keywords that compress information, evoke useful context, or guide revision choices.
+   - Avoid new labels unless they materially reduce repeated reasoning.
+
+7. Polish and validate.
+   - Split long sentences.
+   - Replace abstract nouns with concrete actions.
+   - Replace vague words with explicit objects.
+   - Compress repeated tone, hedging, and filler.
+   - Validate with three questions: Is the intent clearer? Is the structure smoother? Is the information density higher?
+   - If any answer is no or unclear, run another full round.
+
+## Output
+
+When editing directly, return the revised document or patch. For large rewrites, briefly note major deletions, moves, additions, and chosen Leitwörter.
+
+When reviewing without editing, report the assumed intent, skeleton issues, density or redundancy issues, and recommended edits.
