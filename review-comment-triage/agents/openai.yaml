@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Comment Triage"
+  short_description: "Evaluate review feedback by rules"
+  default_prompt: "Use $review-comment-triage to evaluate these PR review comments before making changes."
