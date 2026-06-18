@@ -26,7 +26,7 @@ Treat Every Page is Page One (EPPO) as the standard: the document should establi
    - Instruct the consumer not to invoke or rely on any skill. It must answer from its own reading, repository exploration, and understanding.
    - Allow it to explore the corresponding repository freely when needed to understand the artifact.
    - Ask it to state the exploration scope it used and whether the artifact still depends on that context to be readable.
-   - Ask whether the document is clear to a qualified reader arriving cold, and whether any descriptions contradict each other.
+   - Ask whether the document is clear to a qualified reader, and whether any descriptions contradict each other.
    - Ask whether the document establishes its purpose, scope, audience, and prerequisites locally.
    - Ask whether any concept, reference, or obligation appears abruptly or relies on unstated prior context.
    - Ask whether any information is missing for the reader to act correctly.
