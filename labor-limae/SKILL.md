@@ -16,7 +16,7 @@ Before step 1, create a temporary Markdown trace file in the operating system te
 The trace must:
 
 - Use the same seven step titles, numbering, and order as the Workflow.
-- Record concrete results: intent sentence, paragraph propositions, density decisions, dilution fixes, redundancy merges, chosen Frame-evoking words, candidate comparisons, and validation answers.
+- Record concrete results: intent sentence, paragraph propositions, density decisions, dilution fixes, redundancy merges, consulted vocabulary sources, chosen Frame-evoking words, candidate comparisons, and validation answers.
 - If a step produces no edit, record the inspected result and `No change needed`.
 - Omit no stages and add no extra stages.
 
@@ -55,12 +55,15 @@ Complete each revision round in this order. Preserve source facts and constraint
    - If a claim lacks reason, evidence, boundary, or action, add the minimum needed or flag the gap.
 
 6. Choose Frame-evoking words.
+   - A Frame-evoking word is a term that imports a useful domain frame, making the document's core distinction easier to judge and harder to misread.
    - Identify the specific terms that carry the document's core concepts, judgments, roles, or actions.
-   - For each important concept, test 2-4 candidate words, including existing document or domain terms when available.
+   - For each important concept, first look for established vocabulary in the source document, surrounding project, or relevant knowledge domain.
+   - If the search uses the surrounding project or a relevant knowledge domain, record the consulted source or scope in the trace.
+   - Test 2-4 candidate terms from that vocabulary before inventing a new label.
    - For each candidate, write the associations it evokes: likely frame, implied actor or action, standard, risk, audience expectation, and adjacent concepts.
    - Compare candidates for precision, familiarity, information compression, usefulness for revision choices, and risk of misleading connotations.
    - Select words that evoke the most useful frame for the intended reader and use them consistently as leading terms.
-   - Avoid new labels unless they materially reduce repeated reasoning and their associations are clearer than existing terms.
+   - Invent labels only when established vocabulary fails to clarify the frame, and only when the label materially reduces repeated reasoning.
 
 7. Polish and validate.
    - Split long sentences.
