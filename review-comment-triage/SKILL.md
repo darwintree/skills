@@ -1,6 +1,6 @@
 ---
 name: review-comment-triage
-description: Triage PR review feedback by rewriting comments into testable claims, evaluating orthogonal rules, and choosing whether to fix code, clarify code, encode a contract, make no change, or defer. Use when handling PR review comments, GitHub review threads, requested changes, reviewer suggestions, or agent workflows that must avoid blindly accepting technically correct but low-value changes.
+description: Triage PR review feedback by rewriting comments into testable claims, evaluating orthogonal rules, and choosing whether to fix code, clarify code, encode a contract, make no change, or defer. Use when handling PR review comments, GitHub review threads, requested changes, reviewer suggestions, after using local review-related skills, or agent workflows that must avoid blindly accepting technically correct but low-value changes.
 ---
 
 # Review Comment Triage
