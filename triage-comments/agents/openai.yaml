@@ -1,0 +1,4 @@
+interface:
+  display_name: "Triage Comments"
+  short_description: "Triage all non-user comments with fixed claims"
+  default_prompt: "Use $triage-comments to evaluate these non-user comments before acting on them."

@@ -1,6 +1,7 @@
 ---
 name: labor-limae
-description: "Polish existing drafts with the Labor Limae method: clarify intent, improve structure, raise information density, remove redundancy, choose Frame-evoking words, record each workflow step in a system temporary trace file, and make the document easier to understand, judge, decide from, or act on. Use when the user asks to refine, tighten, rewrite, edit, polish, or review a memo, spec, proposal, PRD, report, article, guide, or similar draft."
+description: Polish an existing draft with the seven-step Labor Limae method.
+disable-model-invocation: true
 ---
 
 # Labor Limae

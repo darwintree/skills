@@ -1,14 +1,14 @@
 ---
-name: implementation-with-traces
+name: trace-implementation-decisions
 description: >
-  Trace implementation decisions left unresolved by an agreed spec, plan,
-  contract, design, or issue. Use during implementation when the source is
-  silent, ambiguous, conflicting, or a discovered constraint forces the agent to
-  choose beyond the source; do not use for requirements, steps, or decisions
-  already stated by the source.
+  Trace unresolved implementation decisions. Always use during implementation
+  from an agreed spec, plan, contract, design, issue, or user request when the
+  source is silent, ambiguous, conflicting, or a discovered constraint requires
+  a choice beyond it. Do not use for requirements, steps, or decisions already
+  stated by the source.
 ---
 
-# Implementation With Traces
+# Trace Implementation Decisions
 
 This skill records unresolved implementation decisions: choices the agent must
 make because the source did not state, settle, or make them actionable. The

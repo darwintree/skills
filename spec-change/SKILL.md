@@ -1,10 +1,7 @@
 ---
 name: spec-change
-description: >
-  管理 docs/spec 的 spec-change-driven 流程。当用户要新增、调整、重写、讨论或确认 spec，
-  或提到“spec change”“契约变更”“修改 spec”“调整 docs/spec 定位/内容”时使用。
-  该 skill 要求先通过讨论确认契约变更细节，再创建带日期的 docs/spec/changes 文件，
-  最后根据已确认的 change 修改最终 spec；实现计划和实现进度不得写入 change 文件。
+description: 通过讨论、change 记录和最终 spec 更新管理 docs/spec 契约变更。
+disable-model-invocation: true
 ---
 
 # Spec Change Skill

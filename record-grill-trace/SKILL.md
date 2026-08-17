@@ -1,6 +1,6 @@
 ---
 name: record-grill-trace
-description: Record discussion traces after `grilling` reaches stable decisions. Use before post-grill work continues.
+description: Record discussion traces after `grilling`. Always invoke by default when a grilling discussion ends or reaches stable decisions, before any post-grill work continues.
 ---
 
 # Record Grill Trace

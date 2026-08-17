@@ -2,3 +2,5 @@ interface:
   display_name: "Labor Limae"
   short_description: "Polish drafted documents into dense actionable clarity"
   default_prompt: "Use $labor-limae to polish this drafted document for clearer intent, structure, and information density."
+policy:
+  allow_implicit_invocation: false
