@@ -1,6 +1,6 @@
 ---
 name: compat-metacognition
-description: Use before a non-additive change to decide whether existing state must remain compatible. Load only if you cannot already execute the stability check from current context.
+description: Compatibility metacognition — a mandatory gate before changing anything that already exists, including when planning or grilling such a change. Purely additive tasks skip the gate. If you already know this skill's contents, apply the gate without loading the skill again.
 ---
 
 # Compat Metacognition
