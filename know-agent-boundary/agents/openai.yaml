@@ -1,0 +1,4 @@
+interface:
+  display_name: "Know Agent Boundary"
+  short_description: "Review whether agent instructions are executable"
+  default_prompt: "Use $know-agent-boundary to review this document against the agent's actual capabilities."

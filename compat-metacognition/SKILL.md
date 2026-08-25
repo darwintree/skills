@@ -1,11 +1,11 @@
 ---
 name: compat-metacognition
-description: Compatibility metacognition — a mandatory gate before changing anything that already exists, including when planning or grilling such a change. The only exemption is a purely additive task.
+description: Use before a non-additive change to decide whether existing state must remain compatible. Load only if you cannot already execute the stability check from current context.
 ---
 
 # Compat Metacognition
 
-The assumption under examination: "the current state must be kept compatible" — an assumption agents act on unconsciously. Run the check before designing or executing any change; skipping it silently is the failure mode this skill exists to prevent.
+The assumption under examination: "the current state must be kept compatible" — an assumption agents act on unconsciously. Run the check before designing or executing the first change to each distinct existing state; reconsider its result only when that state, its dependents, or the evidence changes.
 
 A task that touches existing material is either an **addition** (new code, new document, no existing state) or a **change** (modifying what already exists). Additions have nothing to be compatible with. Every change is a compatibility decision, whether or not anyone calls it one — rewriting a paragraph and migrating an API raise the same first question: **does anything real depend on the current state staying as it is?**
 
@@ -27,4 +27,4 @@ Judge by dependents, not by artifact type or branch name. Branch layout is one s
   3. **Never silent** — keeping anything that only serves F without removing or flagging it is the failure mode.
 - **Stable**: preservation or explicit migration — say which, and which consumers are being served.
 
-Apply at planning and grilling (prefer the incompatible-by-design option when unstable), and again when editing or reviewing the change.
+Apply each decision at planning and grilling (prefer the incompatible-by-design option when unstable), then reuse it while editing and reviewing the same existing state.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Compat Metacognition"
-  short_description: "Check stability before changing anything that exists"
-  default_prompt: "Use $compat-metacognition to check stability before keeping compatibility."
+  short_description: "Load only when the procedure is not known"
+  default_prompt: "Use $compat-metacognition to determine whether this change must preserve existing state."
