@@ -10,7 +10,9 @@ Treat the discussion trace as the gate between `grilling` and any post-grill wor
 ## Workflow
 
 1. Stop any other post-grill work until the discussion trace exists.
-2. Identify the topic of the completed `grilling` discussion, then create or update `docs/traces/discussion/YYYY-MM-DD-slug.md`.
+2. Identify the topic of the completed `grilling` discussion, then create or update the trace file.
+   - If the caller, repository instructions, or an explicit task setting supplies a trace path, use it. Resolve relative paths from the repository root.
+   - Otherwise use `docs/traces/discussion/YYYY-MM-DD-slug.md`, where `YYYY-MM-DD` is the current local date and `slug` is a kebab-case topic slug.
    - Use the current local date for `YYYY-MM-DD`.
    - Use a kebab-case topic slug for `slug`.
    - If the same trace file already exists for the current discussion, update it instead of creating a second file.
@@ -21,7 +23,7 @@ Treat the discussion trace as the gate between `grilling` and any post-grill wor
    - provide a short 1-2 sentence Brief summary of key takeaways/intent,
    - keep the original questions intact below it (details and specifics are grounded in the original questions),
    - for each question within the group, write a clear question heading, `问题：` with the design branch or ambiguity that needed resolution, and `决定：` with only the final choice.
-7. If the discussion produced or is tracked by a `docs/spec/changes/YYYY-MM-DD-*.md` file, add or update a `## Discussion Trace` section in that change file with the trace path.
+7. If the discussion produced or is tracked by a `docs/spec/changes/YYYY-MM-DD-*.md` file, add or update a `## Discussion Trace` section in that change file with the resolved trace path.
 8. If the trace is linked from an issue and that issue is created or updated in the same task, ensure the issue acceptance criteria include a checklist item requiring a line-by-line audit that every decision recorded in the trace has been implemented.
 9. Read the final file back.
 

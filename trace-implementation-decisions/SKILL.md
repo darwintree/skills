@@ -22,7 +22,9 @@ those choices.
    - Trace an unresolved implementation decision when the source is silent, ambiguous, conflicting, or a discovered constraint forces an unstated choice.
    - Do not trace direct execution of explicit source requirements, decisions, or steps.
    - Do not trace routine choices fully determined by repo conventions unless they materially affect behavior, interfaces, data, UX, security, tests, or delivery.
-3. Create or update `docs/traces/implementations/YYYY-MM-DD-slug.md` only when the first unresolved implementation decision appears.
+3. Create or update the trace file at the first unresolved implementation decision.
+   - If the caller, repository instructions, or an explicit task setting supplies a trace path, use it. Resolve relative paths from the repository root.
+   - Otherwise use `docs/traces/implementations/YYYY-MM-DD-slug.md`, where `YYYY-MM-DD` is the current local date and `slug` is a kebab-case topic slug.
 4. Use the user's preferred language for the trace file; if unspecified, use the conversation language.
 5. Append a trace entry before or immediately after making the unresolved implementation decision.
 6. Keep implementation changes in their normal locations. The trace records reasoning; it is not the authoritative artifact.

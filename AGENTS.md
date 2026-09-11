@@ -4,9 +4,9 @@ When asked to modify a skill, first look for its directory in the current reposi
 
 # Skill invocation compatibility
 
-For a user-invoked skill, set both invocation controls:
+Before changing invocation metadata, confirm whether the skill is intended to be user-invoked-only. Apply the following fields only when that intent is explicit or already established by the skill's requirements:
 
 - Add `disable-model-invocation: true` to `SKILL.md` frontmatter.
 - Add `policy.allow_implicit_invocation: false` to `agents/openai.yaml`.
 
-Keep both fields even if a validator rejects `disable-model-invocation`; they support different skill runtimes.
+For skills that may be implicitly invoked, preserve or omit these fields according to their existing invocation policy. Do not infer user-invoked-only behavior merely because the skill was mentioned by the user in the current task. Keep both fields together when the user-invoked-only policy applies, even if a validator rejects `disable-model-invocation`; they support different skill runtimes.
