@@ -1,0 +1,6 @@
+interface:
+  display_name: "OpenSpec Spec Tools"
+  short_description: "Validate or apply OpenSpec spec Markdown"
+  default_prompt: "Use $validate-openspec-format to validate or apply this OpenSpec delta."
+policy:
+  allow_implicit_invocation: true
