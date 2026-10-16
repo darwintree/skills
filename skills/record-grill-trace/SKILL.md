@@ -1,76 +1,30 @@
 ---
 name: record-grill-trace
-description: Record discussion traces after `grilling`. Always invoke by default when a grilling discussion ends or reaches stable decisions, before any post-grill work continues.
+description: Record discussion decisions when the user explicitly ends the grilling session or the grilling workflow completes all discussion and delivers its final conclusions.
 ---
 
 # Record Grill Trace
 
-Treat the discussion trace as the gate between `grilling` and any post-grill work.
+## Choose the path
 
-## Workflow
+Use the path supplied by the caller or repository instructions, resolving relative paths from the repository root. Otherwise use `docs/traces/discussion/YYYY-MM-DD-slug.md` with the current local date and a kebab-case topic slug. Update the same file for the same discussion.
 
-1. Stop any other post-grill work until the discussion trace exists.
-2. Identify the topic of the completed `grilling` discussion, then create or update the trace file.
-   - If the caller, repository instructions, or an explicit task setting supplies a trace path, use it. Resolve relative paths from the repository root.
-   - Otherwise use `docs/traces/discussion/YYYY-MM-DD-slug.md`, where `YYYY-MM-DD` is the current local date and `slug` is a kebab-case topic slug.
-   - Use the current local date for `YYYY-MM-DD`.
-   - Use a kebab-case topic slug for `slug`.
-   - If the same trace file already exists for the current discussion, update it instead of creating a second file.
-3. Read nearby discussion traces only if repository trace style is still unclear.
-4. Extract every resolved question from the discussion.
-5. Organize resolved questions into logical groups (with the top group capturing the Core Intent / Design Tree Root — i.e., "Why", core problem, or main objective).
-6. For each group:
-   - provide a short 1-2 sentence Brief summary of key takeaways/intent,
-   - keep the original questions intact below it (details and specifics are grounded in the original questions),
-   - for each question within the group, write a clear question heading, `问题：` with the design branch or ambiguity that needed resolution, and `决定：` with only the final choice.
-7. If the discussion produced or is tracked by a `docs/spec/changes/YYYY-MM-DD-*.md` file, add or update a `## Discussion Trace` section in that change file with the resolved trace path.
-8. If the trace is linked from an issue and that issue is created or updated in the same task, ensure the issue acceptance criteria include a checklist item requiring a line-by-line audit that every decision recorded in the trace has been implemented.
-9. Read the final file back.
+## Record the decisions
 
-Done when the dated trace file exists, every resolved question from the grill is recorded, any related spec-change link is current, and the final file has been read back.
-
-## Writing Rules
-
-- Keep the trace factual and concise.
-- Group related questions logically. Always place the Core Intent / Design Tree Root ("Why" / core problem / main objective) as the top group.
-- The Brief summary for each group must be minimal (1-2 sentences) to avoid review overhead or distortion; details and specifics must always defer to the original questions and decisions below.
-- It is acceptable to make question wording clearer than the original discussion.
-- Do not add implementation plans, rationale, TODOs, or new decisions that were not made in the discussion.
-- Do not include rejected intermediate options unless they are necessary to describe the question.
-- Preserve final decisions even when the discussion changed direction.
-- If a decision is ambiguous or missing, ask one focused follow-up question before writing that item.
-- Before the trace file exists, do not modify specs, issues, code, or `CONTEXT.md`.
-- After the trace file exists, only make the minimal trace-link updates above unless the user explicitly asks for additional changes.
-- When no spec change is related, write `对应 spec change: None.`
-
-## Trace Shape
-
-Use this structure:
+Group all resolved questions by topic, starting with the core intent. Use this document structure, repeating topic sections and question/decision pairs as needed:
 
 ```markdown
-# [Topic] 讨论记录
+# <主题> 讨论记录
 
-对应 spec change: [`docs/spec/changes/YYYY-MM-DD-short-name.md`](../../spec/changes/YYYY-MM-DD-short-name.md)
+## <主题分组>
 
-## 1. 核心意图 / Core Intent (Design Tree Root)
+> Brief: <用 1–2 句话概括本组的核心意图与结论>
 
-> Brief: [1-2 sentences summarizing the core objective and why this feature/change exists.]
+问题：<已解决的问题>
 
-### 1.1 [Question Title]
-
-问题：[Clear description of the core motivation or objective branch.]
-
-决定：[Final decision.]
-
-## 2. [Group Name / Subsystem]
-
-> Brief: [1-2 sentences high-level takeaway for this group.]
-
-### 2.1 [Question Title]
-
-问题：[Clear description of the branch that was resolved.]
-
-决定：[Final decision.]
+决定：<最终确认的选择>
 ```
 
-Repeat the grouped section structure for every logical area and resolved question.
+## Project workflow
+
+Before applying this skill, read `docs/agents/iteration-workflow.md` from the project root for artifact paths, acceptance rules and lifecycle. Repository workflow rules determine the trace destination.
